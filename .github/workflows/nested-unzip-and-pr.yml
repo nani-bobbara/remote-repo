@@ -150,6 +150,7 @@ jobs:
 
               gh repo clone "$OWNER/$TARGET_REPO" "$WORKDIR" -- --quiet
               cd "$WORKDIR"
+              git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/${TARGET_REPO}.git"
               git config user.name "github-actions[bot]"
               git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -199,6 +200,7 @@ jobs:
 
               gh repo clone "$OWNER/$TARGET_REPO" "$WORKDIR" -- --quiet
               cd "$WORKDIR"
+              git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/${TARGET_REPO}.git"
               git config user.name "github-actions[bot]"
               git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
