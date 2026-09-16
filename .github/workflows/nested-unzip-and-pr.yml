@@ -37,6 +37,7 @@
 name: Zip Upload - Repo Sync & PR
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
