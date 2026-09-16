@@ -90,7 +90,21 @@ jobs:
           echo "$ADDED_ZIPS" > added_zips.txt
 
       # ---------------------------------------------------------------------
-      # 3. Process each added zip file, one at a time, in this single job.
+      # 3. Fail fast if the delivery PAT is missing so the log explains the
+      #    real issue instead of a generic gh CLI message.
+      # ---------------------------------------------------------------------
+      - name: Validate delivery token
+        if: steps.discover.outputs.has_zips == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.TARGET_REPO_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::Missing TARGET_REPO_TOKEN repository secret. Create a PAT with repo/admin access to create repos and open PRs in target repositories."
+            exit 1
+          fi
+
+      # ---------------------------------------------------------------------
+      # 4. Process each added zip file, one at a time, in this single job.
       #    A plain loop (rather than a parallel matrix) keeps this simple and
       #    avoids multiple jobs racing to push the cleanup commit in step 4
       #    to the same main branch at the same time.
