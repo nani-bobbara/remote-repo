@@ -117,6 +117,16 @@ jobs:
         run: |
           set -euo pipefail
 
+          strip_uploaded_workflows() {
+            local extract_dir="$1"
+
+            if [ -d "${extract_dir}/.github/workflows" ]; then
+              echo "::warning::Skipping uploaded .github/workflows files because pushes with TARGET_REPO_TOKEN can be rejected when the token lacks workflow scope."
+              rm -rf "${extract_dir}/.github/workflows"
+              rmdir "${extract_dir}/.github" 2>/dev/null || true
+            fi
+          }
+
           while IFS= read -r ZIP_PATH; do
             [ -z "$ZIP_PATH" ] && continue
             echo "::group::Processing $ZIP_PATH"
@@ -160,6 +170,7 @@ jobs:
 
               mkdir -p "../${EXTRACT_DIR}"
               unzip -q "../${ZIP_PATH}" -d "../${EXTRACT_DIR}"
+              strip_uploaded_workflows "../${EXTRACT_DIR}"
 
               # Replace the branch contents with the newly uploaded code,
               # keeping .git intact.
@@ -206,6 +217,7 @@ jobs:
 
               mkdir -p "../${EXTRACT_DIR}"
               unzip -q "../${ZIP_PATH}" -d "../${EXTRACT_DIR}"
+              strip_uploaded_workflows "../${EXTRACT_DIR}"
 
               # A brand-new repo has nothing to protect, so the upload lands
               # directly on main -- no feature branch or PR needed.

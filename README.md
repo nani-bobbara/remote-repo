@@ -43,3 +43,8 @@ Remote-Repo (this staging registry)
      repo has nothing to protect, so no branch/PR is needed).
 3. **Cleanup.** Once delivery succeeds either way, the zip file is
    automatically deleted from this staging registry.
+
+> Uploaded workflow files under `.github/workflows/` are skipped during
+> delivery. GitHub can reject pushes that add or update workflow files when the
+> delivery PAT does not include workflow scope, so the sync pipeline omits them
+> to keep repo delivery working with the configured token.
