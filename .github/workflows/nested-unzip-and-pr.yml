@@ -78,6 +78,7 @@ jobs:
         id: discover
         env:
           ZIP_FILE_INPUT: ${{ inputs.zip_file }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             if [ -z "${ZIP_FILE_INPUT:-}" ] || [[ "$ZIP_FILE_INPUT" == */* || "$ZIP_FILE_INPUT" != *.zip ]]; then
@@ -90,7 +91,7 @@ jobs:
             fi
             ADDED_ZIPS="$ZIP_FILE_INPUT"
           else
-            ADDED_ZIPS=$(git diff --name-only --diff-filter=AM "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA" -- '*.zip' || true)
+            ADDED_ZIPS=$(git diff --name-only --diff-filter=AM "$PUSH_BEFORE" "$GITHUB_SHA" -- '*.zip')
           fi
 
           if [ -z "$ADDED_ZIPS" ]; then
