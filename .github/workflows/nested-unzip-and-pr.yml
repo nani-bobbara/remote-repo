@@ -38,6 +38,11 @@ name: Zip Upload - Repo Sync & PR
 
 on:
   workflow_dispatch:
+    inputs:
+      zip_file:
+        description: Root-level ZIP file to process
+        required: true
+        type: string
   push:
     branches:
       - main
@@ -63,17 +68,30 @@ jobs:
       - name: Checkout staging registry
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # need the previous commit to diff what was added
+          fetch-depth: 0 # compare the complete push range, not only its last commit
 
       # ---------------------------------------------------------------------
-      # 2. Figure out which zip file(s) were newly ADDED by this push.
-      #    --diff-filter=A excludes deletions, so the cleanup commit made in
-      #    step 7 (which deletes a zip) never re-triggers processing here.
+      # 2. Find ZIPs added or changed by this push, or the explicitly selected
+      #    ZIP for a manual run. Deletions from cleanup are ignored.
       # ---------------------------------------------------------------------
       - name: Discover newly added zip files
         id: discover
+        env:
+          ZIP_FILE_INPUT: ${{ inputs.zip_file }}
         run: |
-          ADDED_ZIPS=$(git diff --name-only --diff-filter=A HEAD^ HEAD -- '*.zip' || true)
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -z "${ZIP_FILE_INPUT:-}" ] || [[ "$ZIP_FILE_INPUT" == */* || "$ZIP_FILE_INPUT" != *.zip ]]; then
+              echo "::error::Select a root-level .zip file to process."
+              exit 1
+            fi
+            if [ ! -f "$ZIP_FILE_INPUT" ]; then
+              echo "::error::ZIP file '$ZIP_FILE_INPUT' does not exist at the repository root."
+              exit 1
+            fi
+            ADDED_ZIPS="$ZIP_FILE_INPUT"
+          else
+            ADDED_ZIPS=$(git diff --name-only --diff-filter=AM "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA" -- '*.zip' || true)
+          fi
 
           if [ -z "$ADDED_ZIPS" ]; then
             echo "No new zip files in this push. Nothing to do."
@@ -133,8 +151,8 @@ jobs:
               continue
             fi
 
-            WORKDIR="target_repo_dir_${VERSION}"
-            EXTRACT_DIR="extracted_${VERSION}"
+            WORKDIR="target_repo_dir_${BASENAME}"
+            EXTRACT_DIR="extracted_${BASENAME}"
             DELIVERED="false"
 
             echo "Target repo: $OWNER/$TARGET_REPO | version: $VERSION"
@@ -178,13 +196,22 @@ jobs:
                 # duplicate commits.
                 git push origin "$BRANCH_NAME" --force
 
-                gh pr create \
+                if gh pr list \
                   --repo "$OWNER/$TARGET_REPO" \
                   --head "$BRANCH_NAME" \
                   --base main \
-                  --title "Sync ${TARGET_REPO} - version ${VERSION}" \
-                  --body "Automated PR from staging upload \`${ZIP_FILE_NAME}\`." \
-                  || echo "PR already exists for branch $BRANCH_NAME; skipping creation."
+                  --state open \
+                  --json number \
+                  --jq 'length > 0' | grep -qx true; then
+                  echo "An open PR already exists for branch $BRANCH_NAME."
+                else
+                  gh pr create \
+                    --repo "$OWNER/$TARGET_REPO" \
+                    --head "$BRANCH_NAME" \
+                    --base main \
+                    --title "Sync ${TARGET_REPO} - version ${VERSION}" \
+                    --body "Automated PR from staging upload \`${ZIP_FILE_NAME}\`."
+                fi
               fi
               cd ..
               DELIVERED="true"
