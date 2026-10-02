@@ -91,7 +91,7 @@ jobs:
             fi
             ADDED_ZIPS="$ZIP_FILE_INPUT"
           else
-            ADDED_ZIPS=$(git diff --name-only --diff-filter=AM "$PUSH_BEFORE" "$GITHUB_SHA" -- '*.zip')
+            ADDED_ZIPS=$(git diff --name-only --diff-filter=AMR "$PUSH_BEFORE" "$GITHUB_SHA" -- '*.zip')
           fi
 
           if [ -z "$ADDED_ZIPS" ]; then
