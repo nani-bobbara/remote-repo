@@ -179,6 +179,7 @@ jobs:
 
               mkdir -p "../${EXTRACT_DIR}"
               unzip -q "../${ZIP_PATH}" -d "../${EXTRACT_DIR}"
+              rm -rf -- "../${EXTRACT_DIR}/.github/workflows"
 
               # Replace the branch contents with the newly uploaded code,
               # keeping .git intact.
@@ -234,6 +235,7 @@ jobs:
 
               mkdir -p "../${EXTRACT_DIR}"
               unzip -q "../${ZIP_PATH}" -d "../${EXTRACT_DIR}"
+              rm -rf -- "../${EXTRACT_DIR}/.github/workflows"
 
               # A brand-new repo has nothing to protect, so the upload lands
               # directly on main -- no feature branch or PR needed.
