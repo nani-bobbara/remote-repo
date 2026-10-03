@@ -257,6 +257,8 @@ jobs:
             # [skip ci] prevents this commit from re-triggering this workflow
             # (belt-and-suspenders alongside the --diff-filter=A check above).
             if [ "$DELIVERED" = "true" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
               git rm --quiet "$ZIP_PATH"
               git commit -m "Remove processed zip: ${ZIP_FILE_NAME} [skip ci]"
               git push origin main
